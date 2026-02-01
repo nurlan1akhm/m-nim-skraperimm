@@ -59,11 +59,14 @@ async function scrape(platformKey) {
             document.querySelectorAll(selector).forEach(el => {
                 const getTxt = (sel) => el.querySelector(sel) ? el.querySelector(sel).innerText : '';
 
-                // New Selectors based on debug:
-                const brand = getTxt('.product-brand');
-                const name = getTxt('.product-name');
-                const price = getTxt('.sale-price');
-                const orgPrice = getTxt('.strikethrough-price');
+                // New Selectors with fallbacks for Mobile/Desktop differences:
+                const brand = getTxt('.product-brand') || getTxt('.prdct-desc-cntnr-ttl');
+                const name = getTxt('.product-name') || getTxt('.prdct-desc-cntnr-name') || getTxt('.fn.name');
+
+                // Price usually has different classes depending on "campaign" vs "regular"
+                const price = getTxt('.sale-price') || getTxt('.prc-box-dscntd') || getTxt('.prc-box-sllng') || getTxt('.discounted-price');
+                const orgPrice = getTxt('.strikethrough-price') || getTxt('.prc-box-orgnl') || getTxt('.original-price') || price;
+
                 const link = el.getAttribute('href') || (el.querySelector('a') ? el.querySelector('a').href : '');
                 const img = el.querySelector('img') ? el.querySelector('img').src : '';
 

@@ -149,7 +149,8 @@ async function scrape(platformKey) {
             total_found: products.length,
             filtered_count: validProducts.length,
             saved_count: savedItems.length,
-            data: validProducts.slice(0, 50)
+            data: validProducts.slice(0, 50),
+            debug_raw_data: products.slice(0, 10) // DEBUG: Show what was actually found
         };
 
     } catch (e) {

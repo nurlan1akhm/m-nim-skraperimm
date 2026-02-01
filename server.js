@@ -27,7 +27,17 @@ async function scrape(platformKey) {
     const config = CONFIG[platformKey];
     console.log(`Starting scrape for ${platformKey}...`);
 
-    const browser = await chromium.launch({ headless: true });
+    // Use Tor proxy when running in production (Coolify)
+    // In Docker, containers communicate via container names
+    const isProduction = process.env.NODE_ENV === 'production' || !process.env.SUPABASE_URL?.includes('localhost');
+    const torProxyUrl = isProduction ? 'socks5://tor-proxy:9050' : null;
+
+    console.log(`Using proxy: ${torProxyUrl || 'none (local mode)'}`);
+
+    const browser = await chromium.launch({
+        headless: true,
+        proxy: torProxyUrl ? { server: torProxyUrl } : undefined
+    });
     const context = await browser.newContext({
         userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
         viewport: { width: 390, height: 844 },

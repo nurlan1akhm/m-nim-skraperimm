@@ -28,9 +28,9 @@ async function scrape(platformKey) {
     console.log(`Starting scrape for ${platformKey}...`);
 
     // Use Tor proxy when running in production (Coolify)
-    // host.docker.internal allows containers to connect to host-mapped ports
+    // Both containers are now in the 'coolify' Docker network, so they can communicate by hostname
     const isProduction = process.env.NODE_ENV === 'production' || !process.env.SUPABASE_URL?.includes('localhost');
-    const torProxyUrl = isProduction ? 'socks5://host.docker.internal:9050' : null;
+    const torProxyUrl = isProduction ? 'socks5://tor-proxy:9050' : null;
 
     console.log(`Using proxy: ${torProxyUrl || 'none (local mode)'}`);
 

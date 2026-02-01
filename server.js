@@ -42,6 +42,14 @@ async function scrape(platformKey) {
             'Upgrade-Insecure-Requests': '1'
         }
     });
+
+    // Force Region to Azerbaijan (AZN) to match local environment and ensure consistent CSS
+    await context.addCookies([
+        { name: 'countryCode', value: 'AZ', domain: '.trendyol.com', path: '/' },
+        { name: 'currency', value: 'AZN', domain: '.trendyol.com', path: '/' },
+        { name: 'storefrontId', value: '34', domain: '.trendyol.com', path: '/' } // 34 is often AZ/Intl
+    ]);
+
     const page = await context.newPage();
 
     try {
@@ -63,9 +71,28 @@ async function scrape(platformKey) {
                 const brand = getTxt('.product-brand') || getTxt('.prdct-desc-cntnr-ttl');
                 const name = getTxt('.product-name') || getTxt('.prdct-desc-cntnr-name') || getTxt('.fn.name');
 
-                // Price usually has different classes depending on "campaign" vs "regular"
-                const price = getTxt('.sale-price') || getTxt('.prc-box-dscntd') || getTxt('.prc-box-sllng') || getTxt('.discounted-price');
-                const orgPrice = getTxt('.strikethrough-price') || getTxt('.prc-box-orgnl') || getTxt('.original-price') || price;
+                // Strategy 1: Specific Selectors
+                let price = getTxt('.sale-price') || getTxt('.prc-box-dscntd') || getTxt('.prc-box-sllng') || getTxt('.discounted-price');
+                let orgPrice = getTxt('.strikethrough-price') || getTxt('.prc-box-orgnl') || getTxt('.original-price');
+
+                // Strategy 2: Regex on the whole card text if price is missing
+                if (!price) {
+                    const text = el.innerText;
+                    // Look for price patterns like "123,45 TL", "123.45 ₼"
+                    // Capture the last price mentioned as likely the sale price
+                    const priceMatch = text.match(/([0-9.,]+)\s*(?:TL|₼|AZN)/gi);
+                    if (priceMatch && priceMatch.length > 0) {
+                        price = priceMatch[0]; // Take first match as price (risky but better than nothing)
+                        // If there are two prices, usually first is sale, second is original? No, usually original struckthrough is first.
+                        // Actually in text flow: "Original: 100 - Sale: 80".
+                        if (priceMatch.length > 1) {
+                            orgPrice = priceMatch[0]; // Expecting regex to find org first
+                            price = priceMatch[priceMatch.length - 1]; // Sale price last
+                        }
+                    }
+                }
+
+                if (!orgPrice) orgPrice = price;
 
                 const link = el.getAttribute('href') || (el.querySelector('a') ? el.querySelector('a').href : '');
                 const img = el.querySelector('img') ? el.querySelector('img').src : '';

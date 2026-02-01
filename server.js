@@ -9,7 +9,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 // Configurations for each platform
 const CONFIG = {
     trendyol: {
-        url: 'https://www.trendyol.com/sr?wc=103328&fl=en-cok-one-cikanlar',
+        url: 'https://www.trendyol.com/sr?fl=indirimli&sst=BEST_DISCOUNT', // Sorted by discount
         selector: '.product-card-jfy',
         parser: null // Logic is inside scrape function
     },
